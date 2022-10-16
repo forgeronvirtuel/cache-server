@@ -1,11 +1,14 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/forgeronvirtuel/cache-server/src/cache"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type HttpError struct {
@@ -14,10 +17,11 @@ type HttpError struct {
 	Details map[string]string `json:"details,omitempty"`
 }
 
-type CacheServerHttpHandler func(w http.ResponseWriter, r *http.Request, route *Route) (status int, body interface{}, err *HttpError)
+type CacheServerHttpHandler func(w http.ResponseWriter, r *http.Request, route *Route) (status int, body []byte, err *HttpError)
 
 type Route struct {
-	Path           string
+	Path string
+	// TODO : better implementation bc a map here is slow
 	MethodsHandler map[string]CacheServerHttpHandler
 	Cache          *cache.LockedCache
 	Logger         *log.Logger
@@ -71,11 +75,7 @@ func (route *Route) HandleHttp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Encode and write body generated from the route
-	data, err := json.Marshal(body)
-	if err != nil {
-		panic(err)
-	}
-	if _, err := w.Write(data); err != nil {
+	if _, err := w.Write(body); err != nil {
 		panic(err)
 	}
 }
@@ -85,43 +85,53 @@ func write404NotFound(w http.ResponseWriter) {
 }
 
 func CreateRouteList(logger *log.Logger) []*Route {
-	cache := cache.NewLockedCache(nil)
+	cche := cache.NewLockedCache(nil)
 	return []*Route{
 		{
-			Path: "/add/",
+			Path: "/add",
 			MethodsHandler: map[string]CacheServerHttpHandler{
 				http.MethodPost: PostAddValueHandler,
 			},
 			Logger: logger,
-			Cache:  cache,
+			Cache:  cche,
 		},
 		{
-			Path: "/get/",
+			Path: "/get",
 			MethodsHandler: map[string]CacheServerHttpHandler{
 				http.MethodGet: GetValueHandler,
 			},
 			Logger: logger,
-			Cache:  cache,
+			Cache:  cche,
 		},
 	}
 }
 
 // GetValueHandler retrieves a value from the cache and send it.
-func GetValueHandler(w http.ResponseWriter, r *http.Request, route *Route) (status int, body interface{}, err *HttpError) {
-	//return http.StatusOK, "my_value", nil
-
-	return http.StatusBadRequest, "my_value", &HttpError{
-		Status:  http.StatusBadRequest,
-		Message: "Internal server error.",
+func GetValueHandler(_ http.ResponseWriter, r *http.Request, route *Route) (status int, body []byte, err *HttpError) {
+	key := strings.Replace(r.URL.String(), route.Path, "", 1)
+	value, ok := route.Cache.GetWithStatus(key)
+	if !ok {
+		return http.StatusNotFound, nil, nil
 	}
+	route.Logger.Printf("Key = `%s`, value = `%s`", key, string(value))
+	return http.StatusOK, value, nil
 }
 
-// GetValueHandler retrieves a value from the cache and send it.
-func PostAddValueHandler(w http.ResponseWriter, r *http.Request, route *Route) (status int, body interface{}, err *HttpError) {
-	//return http.StatusOK, "my_value", nil
-
-	return http.StatusOK, "my_value", &HttpError{
-		Status:  500,
-		Message: "Internal server error.",
+// PostAddValueHandler add a value to the cache.
+func PostAddValueHandler(_ http.ResponseWriter, r *http.Request, route *Route) (status int, body []byte, err *HttpError) {
+	key := strings.Replace(r.URL.String(), route.Path, "", 1)
+	buf := bytes.NewBuffer(nil)
+	_, ioerr := io.Copy(buf, r.Body)
+	if ioerr != nil {
+		return http.StatusBadRequest, nil, &HttpError{
+			Status:  http.StatusBadRequest,
+			Message: "Cannot read request's body",
+			Details: map[string]string{
+				"ioerr": ioerr.Error(),
+			},
+		}
 	}
+	route.Logger.Printf("Key = `%s`, value = `%s`", key, string(buf.Bytes()))
+	route.Cache.Add(key, buf.Bytes())
+	return http.StatusOK, nil, nil
 }
