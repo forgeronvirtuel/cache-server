@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"github.com/forgeronvirtuel/cache-server/src/routes"
 	"log"
 	"net/http"
@@ -15,13 +17,22 @@ func main() {
 
 	listenTo := os.Args[1]
 
+	logger.Println("listening on ", listenTo)
+
+	mux := http.NewServeMux()
+
 	for _, r := range routes.CreateRouteList(logger) {
 		logger.Println("Creating handler for", r.Path)
-		http.HandleFunc(r.Path, r.HandleHttp)
+		mux.HandleFunc(r.Path, (*r).HandleHttp)
 	}
 
-	logger.Println("listening on ", listenTo)
-	if err := http.ListenAndServe(listenTo, nil); err != nil {
-		log.Fatal(err)
+	server := http.Server{
+		Addr:    listenTo,
+		Handler: mux,
+	}
+	if err := server.ListenAndServe(); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			fmt.Printf("error running http server: %s\n", err)
+		}
 	}
 }
