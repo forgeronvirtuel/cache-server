@@ -23,7 +23,7 @@ func main() {
 
 	for _, r := range routes.CreateRouteList(logger) {
 		logger.Println("Creating handler for", r.Path)
-		mux.HandleFunc(r.Path, (*r).HandleHttp)
+		mux.HandleFunc(r.Path, r.HandleHttp)
 	}
 
 	server := http.Server{
