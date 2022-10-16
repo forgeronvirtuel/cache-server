@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/forgeronvirtuel/cache-server/src/routes"
 	"log"
 	"net/http"
 	"os"
@@ -15,9 +15,10 @@ func main() {
 
 	listenTo := os.Args[1]
 
-	http.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello!")
-	})
+	for _, r := range routes.CreateRouteList(logger) {
+		logger.Println("Creating handler for", r.Path)
+		http.HandleFunc(r.Path, r.HandleHttp)
+	}
 
 	logger.Println("listening on ", listenTo)
 	if err := http.ListenAndServe(listenTo, nil); err != nil {
