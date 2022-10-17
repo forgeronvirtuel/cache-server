@@ -103,6 +103,14 @@ func CreateRouteList(logger *log.Logger) []*Route {
 			Logger: logger,
 			Cache:  cche,
 		},
+		{
+			Path: "/search",
+			MethodsHandler: map[string]CacheServerHttpHandler{
+				http.MethodGet: GetSearchHandler,
+			},
+			Logger: logger,
+			Cache:  cche,
+		},
 	}
 }
 
@@ -133,5 +141,10 @@ func PostAddValueHandler(_ http.ResponseWriter, r *http.Request, route *Route) (
 	}
 	route.Logger.Printf("Key = `%s`, value = `%s`", key, string(buf.Bytes()))
 	route.Cache.Add(key, buf.Bytes())
+	return http.StatusOK, nil, nil
+}
+
+// GetSearchHandler returns the list of keys currently registered
+func GetSearchHandler(_ http.ResponseWriter, r *http.Request, route *Route) (status int, body []byte, err *HttpError) {
 	return http.StatusOK, nil, nil
 }
