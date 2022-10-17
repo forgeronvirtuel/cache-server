@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -21,10 +22,17 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	for _, r := range routes.CreateRouteList(logger) {
-		logger.Println("Creating handler for", r.Path)
-		mux.HandleFunc(r.Path, r.HandleHttp)
-	}
+	routes := routes.CreateRouteList(logger)
+	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		for _, r := range routes {
+			if strings.HasPrefix(request.URL.String(), r.Path) {
+				r.HandleHttp(writer, request)
+				return
+			}
+		}
+		logger.Printf("Calling path `%s` not found.", request.URL)
+		writer.WriteHeader(http.StatusNotFound)
+	})
 
 	server := http.Server{
 		Addr:    listenTo,
