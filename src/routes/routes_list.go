@@ -151,6 +151,7 @@ func PostAddValueHandler(_ http.ResponseWriter, r *http.Request, route *Route) (
 }
 
 // GetSearchHandler returns the list of keys currently registered
-func GetSearchHandler(_ http.ResponseWriter, r *http.Request, route *Route) (status int, body []byte, err *HttpError) {
-	return http.StatusOK, nil, nil
+func GetSearchHandler(_ http.ResponseWriter, r *http.Request, route *Route) (int, []byte, *HttpError) {
+	paths := route.KeyHandler.GetAllPaths("")
+	return http.StatusOK, []byte(strings.Join(paths, "\n")), nil
 }
