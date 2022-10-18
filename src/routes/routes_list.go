@@ -146,6 +146,7 @@ func PostAddValueHandler(_ http.ResponseWriter, r *http.Request, route *Route) (
 	}
 	route.Logger.Printf("Key = `%s`, value = `%s`", key, string(buf.Bytes()))
 	route.Cache.Add(key, buf.Bytes())
+	route.KeyHandler.Root(key)
 	return http.StatusOK, nil, nil
 }
 
