@@ -10,7 +10,8 @@ func TestRoot_Root(t *testing.T) {
 	var r *Root
 	r = r.Root("/a/b/c").
 		Root("/a/b/a").
-		Root("/b/")
+		Root("/b/").
+		Root("/a")
 
 	t.Run("Checking tree building", func(t *testing.T) {
 		if r.childs[0].name != "a" {
@@ -33,6 +34,7 @@ func TestRoot_Root(t *testing.T) {
 	t.Run("Get all paths", func(t *testing.T) {
 		paths := r.GetAllPaths("")
 		expected_paths := []string{
+			"/a",
 			"/a/b/a",
 			"/a/b/c",
 			"/b",
@@ -47,6 +49,7 @@ func TestRoot_Root(t *testing.T) {
 	t.Run("Get all path of /a", func(t *testing.T) {
 		paths := r.GetAllPaths("/a")
 		expected_paths := []string{
+			"/a",
 			"/a/b/a",
 			"/a/b/c",
 		}
