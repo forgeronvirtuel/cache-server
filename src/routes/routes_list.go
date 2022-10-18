@@ -25,6 +25,7 @@ type Route struct {
 	MethodsHandler map[string]CacheServerHttpHandler
 	Cache          *cache.LockedCache
 	Logger         *log.Logger
+	KeyHandler     *cache.Root
 }
 
 func (route *Route) HandleHttp(w http.ResponseWriter, r *http.Request) {
@@ -86,30 +87,34 @@ func write404NotFound(w http.ResponseWriter) {
 
 func CreateRouteList(logger *log.Logger) []*Route {
 	cche := cache.NewLockedCache(nil)
+	keyhandler := cache.NewRoot()
 	return []*Route{
 		{
 			Path: "/add",
 			MethodsHandler: map[string]CacheServerHttpHandler{
 				http.MethodPost: PostAddValueHandler,
 			},
-			Logger: logger,
-			Cache:  cche,
+			Logger:     logger,
+			Cache:      cche,
+			KeyHandler: keyhandler,
 		},
 		{
 			Path: "/get",
 			MethodsHandler: map[string]CacheServerHttpHandler{
 				http.MethodGet: GetValueHandler,
 			},
-			Logger: logger,
-			Cache:  cche,
+			Logger:     logger,
+			Cache:      cche,
+			KeyHandler: keyhandler,
 		},
 		{
 			Path: "/search",
 			MethodsHandler: map[string]CacheServerHttpHandler{
 				http.MethodGet: GetSearchHandler,
 			},
-			Logger: logger,
-			Cache:  cche,
+			Logger:     logger,
+			Cache:      cche,
+			KeyHandler: keyhandler,
 		},
 	}
 }
