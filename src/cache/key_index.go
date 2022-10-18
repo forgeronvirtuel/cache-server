@@ -68,21 +68,6 @@ type Node struct {
 	childs []*Node
 }
 
-//func (n *Node) Root(path string) *Node {
-//	keys := splitAndTrim(path)
-//	if n == nil {
-//		n = &Node{
-//			name:   keys[0],
-//			childs: nil,
-//		}
-//		n.append(keys[1:])
-//		return n
-//	} else {
-//		n.append(keys)
-//	}
-//	return n
-//}
-
 func (n *Node) String() string {
 	return n.name
 }
