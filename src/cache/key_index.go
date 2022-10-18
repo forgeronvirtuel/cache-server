@@ -21,6 +21,10 @@ type Root struct {
 	childs []*Node
 }
 
+func NewRoot() *Root {
+	return &Root{childs: []*Node{}}
+}
+
 func (r *Root) Root(path string) *Root {
 	keys := splitAndTrim(path)
 	if r == nil {
