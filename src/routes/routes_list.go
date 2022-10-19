@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strings"
 )
 
@@ -46,6 +47,7 @@ func (route *Route) HandleHttp(w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 			route.Logger.Println(p)
+			debug.PrintStack()
 		}
 	}()
 
@@ -152,6 +154,8 @@ func PostAddValueHandler(_ http.ResponseWriter, r *http.Request, route *Route) (
 
 // GetSearchHandler returns the list of keys currently registered
 func GetSearchHandler(_ http.ResponseWriter, r *http.Request, route *Route) (int, []byte, *HttpError) {
-	paths := route.KeyHandler.GetAllPaths("")
+	key := strings.Replace(r.URL.String(), route.Path, "", 1)
+	route.Logger.Println(key)
+	paths := route.KeyHandler.GetAllPaths("/")
 	return http.StatusOK, []byte(strings.Join(paths, "\n")), nil
 }
